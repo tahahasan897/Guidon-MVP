@@ -1,0 +1,67 @@
+version: "3.9"
+services:
+  db:
+    image: postgres:16
+    env_file:
+      - ../.env
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+  
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  api:
+    build:
+      context: ..
+      dockerfile: backend/Dockerfile
+    env_file:
+      - ../.env
+    depends_on:
+      - db
+      - redis
+    ports:
+      - "8000:8000"
+    volumes:
+      - ../backend:/app
+    command: ["bash", "-lc", "alembic upgrade head || true; uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"]
+
+  worker:
+    build:
+      context: ..
+      dockerfile: backend/Dockerfile
+    env_file:
+      - ../.env
+    depends_on:
+      - api
+      - redis
+    volumes:
+      - ../backend:/app
+    command: ["bash", "-lc", "rq worker -u $$REDIS_URL default"]
+
+  web:
+    build:
+      context: ..
+      dockerfile: frontend/Dockerfile
+    env_file:
+      - ../.env
+    depends_on:
+      - api
+    ports:
+      - "3000:3000"
+    volumes:
+      - ../frontend:/app
+    command: ["bash", "-lc", "npm run dev -- --host 0.0.0.0"]
+
+volumes:
+  db_data:
+  redis_data:

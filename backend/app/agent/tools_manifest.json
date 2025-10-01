@@ -1,0 +1,11 @@
+{
+  "tools": [
+    {"name": "create_document", "provider": "google_docs"},
+    {"name": "create_slide_deck", "provider": "google_slides"},
+    {"name": "append_rows", "provider": "google_sheets"},
+    {"name": "update_cells", "provider": "google_sheets"},
+    {"name": "post_message", "provider": "slack"},
+    {"name": "post_webhook", "provider": "webhook"},
+    {"name": "create_notion_page", "provider": "notion"}
+  ]
+}

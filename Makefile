@@ -12,7 +12,7 @@ logs:
 	docker compose -f infra/docker-compose.yml logs -f | cat
 
 migrate:
-	docker compose -f infra/docker-compose.yml exec api alembic upgrade head || true
+	docker compose -f infra/docker-compose.yml exec -w /app api bash -lc 'export PYTHONPATH=/app; alembic upgrade head'
 
 seed:
 	docker compose -f infra/docker-compose.yml exec api python -m app.seed || true

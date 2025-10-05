@@ -46,7 +46,7 @@ services:
       - redis
     volumes:
       - ../backend:/app
-    command: ["bash", "-lc", "rq worker -u $$REDIS_URL default"]
+    command: ["bash", "-lc", "python -m app.jobs.workers"]
 
   web:
     build:
@@ -66,4 +66,4 @@ services:
 volumes:
   db_data:
   redis_data:
-  web_node_modules: 
+  web_node_modules:

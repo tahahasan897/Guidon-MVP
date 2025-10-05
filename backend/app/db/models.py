@@ -76,6 +76,7 @@ class AgentRun(Base):
     goal: Mapped[str | None]
     status: Mapped[str] = mapped_column(String(20), default="running")
     error: Mapped[str | None]
+    output: Mapped[str | None]
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Header
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from uuid import uuid4
@@ -12,20 +12,20 @@ from app.observability.audit import log_action
 
 router = APIRouter(prefix="/api/agent", tags=["agent"])
 
-
 class RunRequest(BaseModel):
+    org_id: int
     goal: str | None = None
     mode: str = "on_demand"
 
 
 @router.post("/run")
 def run_agent(req: RunRequest, db: Session = Depends(get_db)):
-    run = models.AgentRun(org_id=1, mode=req.mode, goal=req.goal, status="running")
+    run = models.AgentRun(org_id=req.org_id, mode=req.mode, goal=req.goal, status="running")
     db.add(run)
     db.commit()
     db.refresh(run)
 
-    plan = plan_for_goal(1, req.goal, state={})
+    plan = plan_for_goal(req.org_id, req.goal, state={})
 
     for step in plan:
         capability = step["capability"]
@@ -53,6 +53,16 @@ def run_agent(req: RunRequest, db: Session = Depends(get_db)):
 class ConfirmRequest(BaseModel):
     action_id: int
 
+@router.post("/run-hello")
+def run_hello_job(payload: RunRequest, org_id: int = Header(..., alias="X-Org-Id"), db: Session = Depends(get_db)):
+    # Create DB row
+    run = models.AgentRun(org_id=org_id, mode=payload.mode, goal=payload.goal, status="running")
+    db.add(run)
+    db.commit()
+    db.refresh(run)
+    
+    job = enqueue("app.jobs.hello.hello_world", run_id=run.id, name=payload.goal or "friend")
+    return {"run_id": run.id, "status": "queued"}
 
 @router.post("/confirm_action")
 def confirm_action(req: ConfirmRequest, db: Session = Depends(get_db)):
